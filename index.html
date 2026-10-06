@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>20-Week Chit Fund Calculator & Schedule Planner</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome CDN for clean icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .mono-num {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Spreadsheet style table borders */
+    .sheet-table th, .sheet-table td {
+      border: 1px solid #1f2937;
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background-color: white !important;
+        padding: 0 !important;
+      }
+      .sheet-container {
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 p-3 sm:p-6 lg:p-8">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <header class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="p-2.5 bg-emerald-600 text-white rounded-xl shadow-md flex items-center justify-center">
+            <i class="fa-solid fa-calculator text-lg"></i>
+          </span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">20-Week Chit Schedule & Planner</h1>
+        </div>
+        <p class="text-slate-500 text-sm mt-1">Interactive weekly installment breakdown, month groupings, and multi-chit returns.</p>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex items-center gap-2 flex-wrap w-full md:w-auto no-print">
+        <button id="resetBtn" class="flex-1 md:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition active:scale-95 shadow-sm">
+          <i class="fa-solid fa-rotate-left text-xs"></i> Reset Values
+        </button>
+        <button id="exportCsvBtn" class="flex-1 md:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-sm font-semibold transition active:scale-95 shadow-sm">
+          <i class="fa-solid fa-file-excel text-xs"></i> Export CSV
+        </button>
+        <button id="printBtn" class="flex-1 md:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition active:scale-95 shadow-md">
+          <i class="fa-solid fa-print text-xs"></i> Print Sheet
+        </button>
+      </div>
+    </header>
+
+    <!-- Interactive Controls Bar -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 no-print">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        
+        <!-- Start Date Control -->
+        <div>
+          <label for="startDateInput" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <i class="fa-regular fa-calendar-days text-emerald-600 mr-1"></i> Starting Date
+          </label>
+          <input type="date" id="startDateInput" value="2026-07-24"
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+        </div>
+
+        <!-- Number of Chits Control -->
+        <div>
+          <label for="numChitsInput" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center justify-between">
+            <span><i class="fa-solid fa-layer-group text-emerald-600 mr-1"></i> Number of Chits</span>
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border-2 border-red-500 text-red-600 font-extrabold text-xs">N</span>
+          </label>
+          <div class="flex items-center">
+            <button id="decrementChits" class="px-3.5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-l-xl border border-r-0 border-slate-300 active:bg-slate-400 transition">-</button>
+            <input type="number" id="numChitsInput" min="1" max="100" value="4" 
+              class="w-full text-center py-2.5 bg-slate-50 border-y border-slate-300 font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <button id="incrementChits" class="px-3.5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-r-xl border border-l-0 border-slate-300 active:bg-slate-400 transition">+</button>
+          </div>
+        </div>
+
+        <!-- Chit Face Value info -->
+        <!-- <div>
+          <label for="faceValueInput" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <i class="fa-solid fa-indian-rupee-sign text-emerald-600 mr-1"></i> Scheme Value per Chit
+          </label>
+          <input type="number" id="faceValueInput" value="20000" step="500"
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+        </div> -->
+
+        <!-- Toggle Edit Mode -->
+        <div class="flex items-center h-full">
+          <label class="relative flex items-center gap-3 cursor-pointer select-none bg-slate-50 p-2.5 rounded-xl border border-slate-200 w-full hover:bg-slate-100 transition">
+            <input type="checkbox" id="editModeToggle" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[13px] after:left-[13px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            <span class="text-xs font-bold text-slate-700">Editable Table Values</span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Metric summary cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Paid (1 Chit)</p>
+        <p id="cardTotal1" class="text-2xl font-black text-slate-900 mt-1 mono-num">₹16,969</p>
+        <span class="text-xs text-slate-500 mt-1 block">Full 20-week installment sum</span>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Paid (<span class="card-chits-count">4</span> Chits)</p>
+        <p id="cardTotalN" class="text-2xl font-black text-slate-900 mt-1 mono-num">₹67,876</p>
+        <span class="text-xs text-slate-500 mt-1 block">Accumulated total for all chits</span>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-blue-200 p-4 shadow-sm bg-blue-50/40">
+        <p class="text-xs font-bold text-blue-600 uppercase tracking-wider">Net Profit (1 Chit)</p>
+        <p id="cardProfit1" class="text-2xl font-black text-blue-700 mt-1 mono-num">₹2,511</p>
+        <span class="text-xs text-blue-600 mt-1 block">Last prize minus total paid</span>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-blue-200 p-4 shadow-sm bg-blue-50/40">
+        <p class="text-xs font-bold text-blue-600 uppercase tracking-wider">Net Profit (<span class="card-chits-count">4</span> Chits)</p>
+        <p id="cardProfitN" class="text-2xl font-black text-blue-700 mt-1 mono-num">₹10,044</p>
+        <span class="text-xs text-blue-600 mt-1 block">Total dividend profit realized</span>
+      </div>
+    </div>
+
+    <!-- Spreadsheet Sheet Canvas -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-300 p-4 sm:p-6 overflow-hidden sheet-container">
+      
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div class="flex items-center gap-2">
+          <span class="h-3 w-3 rounded-full bg-emerald-500"></span>
+          <h2 class="text-base font-bold text-slate-800 uppercase tracking-wide">20-Week Installment & Auction Ledger</h2>
+        </div>
+        <div class="text-xs text-slate-500 font-medium">
+          Dates advance weekly (+7 days) & grouped by calendar month
+        </div>
+      </div>
+
+      <!-- Responsive Horizontal Overflow Container -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-center border-collapse sheet-table text-sm sm:text-base font-medium">
+          <!-- Main Table Header -->
+          <thead>
+            <tr class="bg-white text-slate-900 font-bold border-b border-black">
+              <!-- Left side: 1 Chit -->
+              <th class="py-2.5 px-3 w-16">S No</th>
+              <th class="py-2.5 px-4 w-32">Day</th>
+              <th class="py-2.5 px-4 w-28">Amount</th>
+              <th class="py-2.5 px-4 w-32 border-r-2 border-black"></th>
+              
+              <!-- Center: Month Grouped Subtotals -->
+              <th colspan="2" class="py-2 px-6 bg-slate-100 border-x-2 border-black font-semibold text-xs uppercase tracking-wider text-slate-700">
+                Monthly Aggregate
+              </th>
+
+              <!-- Right side: Dynamic N Chits with red circled badge -->
+              <th class="py-2.5 px-4 w-32 text-center relative">
+                <div class="flex items-center justify-center gap-1.5">
+                  <div class="w-7 h-7 rounded-full border-2 border-red-600 text-red-600 font-black text-sm flex items-center justify-center mx-auto shadow-sm">
+                    <span id="badgeNumChits">4</span>
+                  </div>
+                </div>
+              </th>
+              <th class="py-2.5 px-4 w-32"></th>
+            </tr>
+          </thead>
+
+          <!-- Table Body rendered via JavaScript -->
+          <tbody id="chitTableBody" class="divide-y divide-black">
+            <!-- Dynamic rows will be inserted here -->
+          </tbody>
+
+          <!-- Table Footer matching the original sheet -->
+          <tfoot class="font-bold border-t-2 border-black">
+            <!-- Row for Grand Totals -->
+            <tr class="bg-white">
+              <td colspan="2" class="border-transparent"></td>
+              <td id="grandTotal1" class="py-3 px-3 text-slate-900 mono-num text-base sm:text-lg border-x border-black bg-slate-50 font-bold">16969</td>
+              <td colspan="3" class="border-transparent"></td>
+              <td id="grandTotalN" class="py-3 px-3 text-slate-900 mono-num text-base sm:text-lg border-x border-black bg-slate-50 font-bold">67876</td>
+              <td class="border-transparent"></td>
+            </tr>
+            <!-- Row for Profit Highlight -->
+            <tr class="bg-white">
+              <td colspan="2" class="border-transparent text-right pr-4 text-blue-600 font-bold text-base">Profit</td>
+              <td id="grandProfit1" class="py-2 px-3 text-blue-600 mono-num text-lg sm:text-xl font-extrabold border-x border-black bg-blue-50/30">2511</td>
+              <td colspan="3" class="border-transparent"></td>
+              <td class="py-2 px-3 text-blue-600 font-bold text-base text-right border-l border-transparent">Profit</td>
+              <td id="grandProfitN" class="py-2 px-3 text-blue-600 mono-num text-lg sm:text-xl font-extrabold border-r border-black bg-blue-50/30 text-center">10044</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Bottom Hint and legend -->
+      <div class="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-500 gap-2 border-t pt-3">
+        <div class="flex items-center gap-4 flex-wrap">
+          <span class="flex items-center gap-1.5">
+            <span class="w-3.5 h-3.5 rounded bg-[#97c482] border border-black/30"></span> Soft Green Month
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="w-3.5 h-3.5 rounded bg-white border border-black/30"></span> White Month
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="w-3.5 h-3.5 rounded bg-[#fff033] border border-black/30"></span> Company First Prize
+          </span>
+        </div>
+        <div>
+          <span>Formula: <code class="bg-slate-100 px-1 py-0.5 rounded font-mono">Profit = Last Prize - Total Paid</code></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Notification Toast for Copied/Exported -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition duration-300 pointer-events-none flex items-center gap-2 text-sm z-50">
+      <i class="fa-solid fa-circle-check text-emerald-400"></i>
+      <span id="toastMsg">Action completed successfully</span>
+    </div>
+
+  </div>
+
+  <script>
+    // 20-week initial base model exactly mirroring the provided sheet
+    const INITIAL_BASE_DATA = [
+      { sNo: 1,  amount: 1000, prize: 'Company' },
+      { sNo: 2,  amount: 725,  prize: 14000 },
+      { sNo: 3,  amount: 735,  prize: 14200 },
+      { sNo: 4,  amount: 745,  prize: 14400 },
+      { sNo: 5,  amount: 755,  prize: 14600 },
+      { sNo: 6,  amount: 785,  prize: 15200 },
+      { sNo: 7,  amount: 795,  prize: 15400 },
+      { sNo: 8,  amount: 815,  prize: 15800 },
+      { sNo: 9,  amount: 825,  prize: 16000 },
+      { sNo: 10, amount: 835,  prize: 16200 },
+      { sNo: 11, amount: 845,  prize: 16400 },
+      { sNo: 12, amount: 855,  prize: 16600 },
+      { sNo: 13, amount: 855,  prize: 16600 },
+      { sNo: 14, amount: 855,  prize: 16600 },
+      { sNo: 15, amount: 865,  prize: 16800 },
+      { sNo: 16, amount: 875,  prize: 17000 },
+      { sNo: 17, amount: 895,  prize: 17400 },
+      { sNo: 18, amount: 915,  prize: 17800 },
+      { sNo: 19, amount: 995,  prize: 19400 },
+      { sNo: 20, amount: 999,  prize: 19480 }
+    ];
+
+    // State management
+    let chitData = JSON.parse(JSON.stringify(INITIAL_BASE_DATA));
+    let startDate = '2026-07-24';
+    let numChits = 4;
+    let editMode = false;
+
+    // DOM Elements
+    const startDateInput = document.getElementById('startDateInput');
+    const numChitsInput = document.getElementById('numChitsInput');
+    const badgeNumChits = document.getElementById('badgeNumChits');
+    const editModeToggle = document.getElementById('editModeToggle');
+    const chitTableBody = document.getElementById('chitTableBody');
+    const grandTotal1 = document.getElementById('grandTotal1');
+    const grandTotalN = document.getElementById('grandTotalN');
+    const grandProfit1 = document.getElementById('grandProfit1');
+    const grandProfitN = document.getElementById('grandProfitN');
+    const cardTotal1 = document.getElementById('cardTotal1');
+    const cardTotalN = document.getElementById('cardTotalN');
+    const cardProfit1 = document.getElementById('cardProfit1');
+    const cardProfitN = document.getElementById('cardProfitN');
+    const chitsCountSpans = document.querySelectorAll('.card-chits-count');
+    const decrementChitsBtn = document.getElementById('decrementChits');
+    const incrementChitsBtn = document.getElementById('incrementChits');
+    const resetBtn = document.getElementById('resetBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const printBtn = document.getElementById('printBtn');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    // Month abbreviation list
+    const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Helper: Formats a date object to "D-MMM-YYYY" e.g., "24-Jul-2026"
+    function formatSheetDate(d) {
+      const day = d.getDate();
+      const month = MONTH_NAMES[d.getMonth()];
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    // Helper: Safely parses date string yyyy-mm-dd into local Date
+    function parseLocalDate(dateStr) {
+      const parts = dateStr.split('-');
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    // Helper: Display Toast Notification
+    function showToast(message) {
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2500);
+    }
+
+    function computeSchedule() {
+      const baseDate = parseLocalDate(startDate);
+      const schedule = [];
+
+      for (let i = 0; i < chitData.length; i++) {
+        const item = chitData[i];
+        // Weekly advance: + 7 * i days
+        const currentDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + (i * 7));
+        const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+        const monthLabel = MONTH_NAMES[currentDate.getMonth()];
+        const formattedDate = formatSheetDate(currentDate);
+
+        schedule.push({
+          sNo: item.sNo,
+          dateObj: currentDate,
+          formattedDate: formattedDate,
+          monthKey: monthKey,
+          monthLabel: monthLabel,
+          amount1: Number(item.amount) || 0,
+          prize1: item.prize,
+          amountN: (Number(item.amount) || 0) * numChits,
+          prizeN: typeof item.prize === 'number' ? item.prize * numChits : item.prize
+        });
+      }
+
+      // Group contiguous items belonging to the same month for rowspan calculations
+      const monthGroups = [];
+      let currentGroup = null;
+
+      schedule.forEach((row, index) => {
+        if (!currentGroup || currentGroup.monthKey !== row.monthKey) {
+          if (currentGroup) monthGroups.push(currentGroup);
+          currentGroup = {
+            monthKey: row.monthKey,
+            monthLabel: row.monthLabel,
+            startIndex: index,
+            count: 1,
+            sumAmount1: row.amount1,
+            sumAmountN: row.amountN
+          };
+        } else {
+          currentGroup.count++;
+          currentGroup.sumAmount1 += row.amount1;
+          currentGroup.sumAmountN += row.amountN;
+        }
+      });
+      if (currentGroup) monthGroups.push(currentGroup);
+
+      // Attach group metadata to each schedule row
+      monthGroups.forEach((group, groupIdx) => {
+        const isAlternateMonth = (groupIdx % 2 === 1); // 0=first month (Jul: green), 1=white, 2=green, etc.
+        for (let idx = group.startIndex; idx < group.startIndex + group.count; idx++) {
+          schedule[idx].isGroupStart = (idx === group.startIndex);
+          schedule[idx].groupSpan = group.count;
+          schedule[idx].groupSum1 = group.sumAmount1;
+          schedule[idx].groupSumN = group.sumAmountN;
+          schedule[idx].groupBgColor = isAlternateMonth ? 'bg-white' : 'bg-[#97c482]';
+          schedule[idx].groupColorClass = isAlternateMonth ? 'month-white' : 'month-green';
+        }
+      });
+
+      return schedule;
+    }
+
+    function renderTable() {
+      const schedule = computeSchedule();
+      badgeNumChits.textContent = numChits;
+      chitsCountSpans.forEach(el => el.textContent = numChits);
+
+      let totalPaid1 = 0;
+      let totalPaidN = 0;
+      let lastPrize1 = 0;
+      let lastPrizeN = 0;
+
+      let html = '';
+
+      schedule.forEach((row, index) => {
+        totalPaid1 += row.amount1;
+        totalPaidN += row.amountN;
+
+        if (index === schedule.length - 1) {
+          lastPrize1 = typeof row.prize1 === 'number' ? row.prize1 : 0;
+          lastPrizeN = typeof row.prizeN === 'number' ? row.prizeN : 0;
+        }
+
+        // Color styles matching spreadsheet
+        const rowBg = row.groupBgColor;
+        const isFirstWeek = row.sNo === 1;
+        const yellowPrizeBg = isFirstWeek ? 'bg-[#fff033] text-black font-semibold' : '';
+
+        html += `<tr class="${rowBg} hover:opacity-95 transition-colors">`;
+
+        // 1. S No
+        html += `<td class="py-2 px-2 border border-black font-medium">${row.sNo}</td>`;
+
+        // 2. Day
+        html += `<td class="py-2 px-3 border border-black whitespace-nowrap text-slate-900">${row.formattedDate}</td>`;
+
+        // 3. Amount (1 Chit)
+        if (editMode) {
+          html += `<td class="py-1 px-1 border border-black">
+            <input type="number" data-index="${index}" data-field="amount" value="${chitData[index].amount}" 
+              class="w-full text-center py-1 bg-white border border-slate-300 rounded font-semibold text-slate-900 focus:ring-1 focus:ring-emerald-500">
+          </td>`;
+        } else {
+          html += `<td class="py-2 px-3 border border-black mono-num font-semibold text-slate-900">${row.amount1}</td>`;
+        }
+
+        // 4. Prize (1 Chit)
+        if (editMode && !isFirstWeek) {
+          html += `<td class="py-1 px-1 border border-black border-r-2 ${yellowPrizeBg}">
+            <input type="number" data-index="${index}" data-field="prize" value="${chitData[index].prize}" 
+              class="w-full text-center py-1 bg-white border border-slate-300 rounded font-semibold text-slate-900 focus:ring-1 focus:ring-emerald-500">
+          </td>`;
+        } else {
+          html += `<td class="py-2 px-3 border border-black border-r-2 ${yellowPrizeBg} mono-num">${row.prize1}</td>`;
+        }
+
+        // 5 & 6. Month Summary Columns (rowspan cells inserted on first week of each month)
+        if (row.isGroupStart) {
+          html += `
+            <td rowspan="${row.groupSpan}" class="py-2 px-3 border border-black border-l-2 align-middle mono-num font-bold text-slate-900 text-base sm:text-lg bg-inherit">
+              ${row.groupSum1}
+            </td>
+            <td rowspan="${row.groupSpan}" class="py-2 px-3 border border-black border-r-2 align-middle mono-num font-bold text-slate-900 text-base sm:text-lg bg-inherit">
+              ${row.groupSumN}
+            </td>
+          `;
+        }
+
+        // 7. Amount (N Chits)
+        html += `<td class="py-2 px-3 border border-black mono-num font-bold text-slate-900">${row.amountN}</td>`;
+
+        // 8. Prize (N Chits)
+        html += `<td class="py-2 px-3 border border-black mono-num font-semibold text-slate-900 ${yellowPrizeBg}">
+          ${row.prizeN}
+        </td>`;
+
+        html += `</tr>`;
+      });
+
+      chitTableBody.innerHTML = html;
+
+      // Profit calculations
+      const profit1 = lastPrize1 - totalPaid1;
+      const profitN = lastPrizeN - totalPaidN;
+
+      // Update grand totals in footer
+      grandTotal1.textContent = totalPaid1.toLocaleString('en-IN');
+      grandTotalN.textContent = totalPaidN.toLocaleString('en-IN');
+      grandProfit1.textContent = profit1.toLocaleString('en-IN');
+      grandProfitN.textContent = profitN.toLocaleString('en-IN');
+
+      // Update Top Summary Cards
+      cardTotal1.textContent = `₹${totalPaid1.toLocaleString('en-IN')}`;
+      cardTotalN.textContent = `₹${totalPaidN.toLocaleString('en-IN')}`;
+      cardProfit1.textContent = `₹${profit1.toLocaleString('en-IN')}`;
+      cardProfitN.textContent = `₹${profitN.toLocaleString('en-IN')}`;
+
+      // Wire up inline input listeners if in edit mode
+      if (editMode) {
+        chitTableBody.querySelectorAll('input').forEach(input => {
+          input.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index, 10);
+            const field = e.target.dataset.field;
+            const val = field === 'amount' || field === 'prize' ? Number(e.target.value) || 0 : e.target.value;
+            chitData[idx][field] = val;
+            renderTable();
+          });
+        });
+      }
+    }
+
+    // Date change listener
+    startDateInput.addEventListener('change', (e) => {
+      if (e.target.value) {
+        startDate = e.target.value;
+        renderTable();
+        showToast('Start date and weekly schedule updated!');
+      }
+    });
+
+    // Num chits change listeners
+    numChitsInput.addEventListener('input', (e) => {
+      let val = parseInt(e.target.value, 10);
+      if (isNaN(val) || val < 1) val = 1;
+      numChits = val;
+      renderTable();
+    });
+
+    decrementChitsBtn.addEventListener('click', () => {
+      if (numChits > 1) {
+        numChits--;
+        numChitsInput.value = numChits;
+        renderTable();
+      }
+    });
+
+    incrementChitsBtn.addEventListener('click', () => {
+      numChits++;
+      numChitsInput.value = numChits;
+      renderTable();
+    });
+
+    // Scheme face value adjustment
+    // document.getElementById('faceValueInput').addEventListener('input', (e) => {
+    //   const val = Number(e.target.value);
+    //   if (!isNaN(val) && val > 0) {
+    //     // Adjust week 1 amount to faceValue / 20 weeks as benchmark
+    //     chitData[0].amount = Math.round(val / 20);
+    //     renderTable();
+    //   }
+    // });
+
+    // Toggle edit mode
+    editModeToggle.addEventListener('change', (e) => {
+      editMode = e.target.checked;
+      renderTable();
+      showToast(editMode ? 'Edit Mode enabled: edit individual amounts directly.' : 'Edit Mode saved.');
+    });
+
+    // Reset button
+    resetBtn.addEventListener('click', () => {
+      chitData = JSON.parse(JSON.stringify(INITIAL_BASE_DATA));
+      startDate = '2026-07-24';
+      startDateInput.value = startDate;
+      numChits = 4;
+      numChitsInput.value = numChits;
+      editMode = false;
+      editModeToggle.checked = false;
+      renderTable();
+      showToast('Reset schedule to default values!');
+    });
+
+    // Print button
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+
+    // Export CSV feature
+    exportCsvBtn.addEventListener('click', () => {
+      const schedule = computeSchedule();
+      let csv = 'S No,Day,Amount (1 Chit),Prize (1 Chit),Month Total (1 Chit),Month Total (' + numChits + ' Chits),Amount (' + numChits + ' Chits),Prize (' + numChits + ' Chits)\n';
+
+      schedule.forEach(row => {
+        csv += `"${row.sNo}","${row.formattedDate}","${row.amount1}","${row.prize1}","${row.groupSum1}","${row.groupSumN}","${row.amountN}","${row.prizeN}"\n`;
+      });
+
+      // Total row
+      const total1 = schedule.reduce((acc, r) => acc + r.amount1, 0);
+      const totalN = schedule.reduce((acc, r) => acc + r.amountN, 0);
+      csv += `,,,,"${total1}","${totalN}",,\n`;
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Chit_Fund_Schedule_${numChits}_Chits_${startDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('CSV Schedule downloaded!');
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTable();
+    });
+  </script>
+</body>
+</html>
